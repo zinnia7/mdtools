@@ -1,7 +1,9 @@
 #!/usr/bin/python3
+# unit of velocity should be A/fs (real unit)
 
 import sys
 from ase.io import read
+from ase.calculators.lammps import convert
 import numpy as np
 
 # vac by FFT
@@ -23,7 +25,7 @@ else:
   save_timestep = float(sys.argv[3])
 
 # read lammpstrj as ase format
-trjs = read(lammpstrj, format="lammps-dump-text", index=":")
+trjs = read(lammpstrj, format="lammps-dump-text", index=":", units="real")
 
 # summary of lammpstrj
 natoms = trjs[0].get_global_number_of_atoms()
@@ -45,13 +47,14 @@ for i in range(0,natoms):
     ntarget += 1
     for j in range(0, ntrjs):
       vs = np.append(vs, trjs[j].get_velocities()[i].reshape(1,-1),axis=0)
-    vac += vac_fft(vs)
+    vs = convert(vs, "velocity", "ASE", "real")
+    vac += vac_fft(vs)/ntrjs
 vac /= ntarget
 
 print("# number of target atoms: {}".format(ntarget))
 
 f = open("vac.dat","w")
-f.write("# time(fs) vacx vacy vacz vac ivac\n")
+f.write("# time(fs) vacx vacy vacz vac(A^2/fs^2) ivac(A^2/fs)\n")
 ivac = 0 # for integral
 for i in range(ntrjs):
   vac_tot = vac[i,0] + vac[i,1] + vac[i,2]

@@ -1,7 +1,10 @@
 #!/usr/bin/python3
+# LAMMPS units should be "real"
+# position data should be unwrapped coordinates (xu, yu, zu)
 
 import sys
 from ase.io import read
+from ase.calculators.lammps import convert
 import numpy as np
 
 # original msd method
@@ -43,7 +46,7 @@ else:
   save_timestep = float(sys.argv[3])
 
 # read lammpstrj as ase format
-trjs = read(lammpstrj, format="lammps-dump-text", index=":")
+trjs = read(lammpstrj, format="lammps-dump-text", index=":", units="real")
 
 # summary of lammpstrj
 natoms = trjs[0].get_global_number_of_atoms()
@@ -64,6 +67,7 @@ for i in range(0,natoms):
     ntarget += 1
     for j in range(0, ntrjs):
       rus = np.append(rus, trjs[j].positions[i].reshape(1,-1),axis=0)
+    rus = convert(rus, "distance", "ASE", "real")
     msds += msd_fft(rus)
 #    msds += msd_original(rus)
 msds /= ntarget
@@ -71,7 +75,7 @@ msds /= ntarget
 print("# number of target atoms: {}".format(ntarget))
 
 f = open("msd.dat","w")
-f.write("# time(fs) msdx msdy msdz msd\n")
+f.write("# time(fs) msdx msdy msdz msd(A^2)\n")
 for i in range(ntrjs):
   f.write("{0:.1f} {1:.5f} {2:.5f} {3:.5f} {4:.5f}\n".format(i*save_timestep,msds[i,0],msds[i,1],msds[i,2],msds[i,0]+msds[i,1]+msds[i,2]))
 f.close()
