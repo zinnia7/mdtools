@@ -13,7 +13,7 @@ def vac_fft(v):
   for i in range(3):
     fk = np.fft.fft(v[:,i], n=2*n)
     power = fk * fk.conjugate()
-    vac[:,i] = np.fft.ifft(power)[:n].real
+    vac[:,i] = np.fft.ifft(power)[:n].real/n
   return vac
 
 if len(sys.argv) != 4:
@@ -48,7 +48,7 @@ for i in range(0,natoms):
     for j in range(0, ntrjs):
       vs = np.append(vs, trjs[j].get_velocities()[i].reshape(1,-1),axis=0)
     vs = convert(vs, "velocity", "ASE", "real")
-    vac += vac_fft(vs)/ntrjs
+    vac += vac_fft(vs)
 vac /= ntarget
 
 print("# number of target atoms: {}".format(ntarget))
